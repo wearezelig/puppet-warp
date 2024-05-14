@@ -64,6 +64,9 @@ class DemoWithTransparency(object):
             if not op.isfile(image):
                 raise FileNotFoundError(f"No image file {image}")
             self.img = cv2.imread(image, cv2.IMREAD_UNCHANGED)
+            mask = self.img[:,:,3].reshape(self.img.shape[0], self.img.shape[1], 1) / 255.0
+            self.img[:,:,:2] = np.array(self.img[:,:,:2] * mask, dtype=np.uint8)
+            # convert the raw png to premultiplied alpha
             self.transform_image = True
         self._img = self.img.copy()
         self._transformed_background = self.img.copy()
