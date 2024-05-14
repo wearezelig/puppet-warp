@@ -27,7 +27,7 @@ def sort_faces(faces: List[List[int]], vertices, focal_point) -> List[List[int]]
     centroids = [np.sum(verts[face, :], axis=0)/len(face) for face in faces]
     focal = np.array(focal_point).reshape((1,2))
     diffs = centroids - focal
-    dists = np.sum(diffs*diffs, axis=1)
+    dists = np.sum(diffs * diffs, axis=1)
     indices = [i for i in range(len(faces))]
     indices = sorted(indices, key = lambda i: -dists[i])
     return [faces[i] for i in indices]
