@@ -64,7 +64,7 @@ def _broadcast_transformed_tri_with_alpha_channel(
 
     dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] = \
         dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] + warped
-    
+
     # the above code assumes that images use "premultiplied alpha"
     # to convert a non-premultiplied image, img, to premultiplied alpha, use a line like
     # alpha = img[:,:,3].reshape(img.shape[0], img.shape[1], 1)) / 255.0

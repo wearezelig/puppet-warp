@@ -70,7 +70,7 @@ class DemoWithTransparency(object):
             self.transform_image = True
         self._img = self.img.copy()
         self._transformed_background = self.img.copy()
-        self._bg_img = np.ones((self.screen_height, self.screen_width, 3), np.uint8) * 255 
+        self._bg_img = np.ones((self.screen_height, self.screen_width, 3), np.uint8) * 255
         if bg_image is not None:
             self._bg_img = cv2.imread(bg_image)
 
