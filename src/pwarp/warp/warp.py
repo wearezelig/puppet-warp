@@ -57,7 +57,7 @@ def _broadcast_transformed_tri_with_alpha_channel(
     """
     # Copy triangular region of the rectangular patch to the output image.
     # TODO(mschuresko) : fix math to do proper blending
-    mask = mask * warped[:,:,3].reshape(warped.shape[0],warped.shape[1],1)/255.0
+    mask = mask * warped[:, :, 3].reshape(warped.shape[0], warped.shape[1], 1) / 255.0
     inv_mask = ((1.0, 1.0, 1.0, 1.0) - mask)
     dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] = \
         dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] * inv_mask
