@@ -8,6 +8,7 @@ from pwarp.mesh.tri import triangular_mesh
 from pwarp.core.arap import StepOne as ARAPStepOne, StepTwo as ARAPStepTwo
 from pwarp import _io
 from pwarp.demo.demo import Demo
+from pwarp.demo.demo_with_transparency import DemoWithTransparency
 
 
 __all__ = (
