@@ -22,7 +22,8 @@ __all__ = (
     'ARAPStepTwo',
     'PuppetObject',
     'get_default_puppet',
-    'Demo'
+    'Demo',
+    'DemoWithTransparency'
 )
 
 
