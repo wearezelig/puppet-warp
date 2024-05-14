@@ -201,10 +201,8 @@ def _crop_to_origin(
     """
     dx, dy, bbox_w, bbox_h = bbox
     # Create base white image.
-    base_image = np.ones((origin_h, origin_w, image.shape[2]), dtype=dtype.UINT8) * 255
-    if image.shape[2] == 4:
-        # base image should be transparent black if we're using an alpha channel
-        base_image *= 0
+    has_alpha = image.shape[2] == 4
+    base_image = np.full((origin_h, origin_w, image.shape[2]), 0 if has_alpha else 255, dtype=dtype.UINT8)
     slicer = np.zeros((2, 4), dtype=dtype.INT32)
     deltas, shape, bbox_shape = (dx, dy), (origin_w, origin_h), (bbox_w, bbox_h)
 
