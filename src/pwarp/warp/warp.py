@@ -58,12 +58,22 @@ def _broadcast_transformed_tri_with_alpha_channel(
     # Copy triangular region of the rectangular patch to the output image.
     # TODO(mschuresko) : fix math to do proper blending
     mask = mask * warped[:,:,3].reshape(warped.shape[0],warped.shape[1],1)/255.0
-    mask = ((1.0, 1.0, 1.0, 1.0) - mask)
+    inv_mask = ((1.0, 1.0, 1.0, 1.0) - mask)
     dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] = \
-        dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] * mask
+        dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] * inv_mask
 
     dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] = \
         dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] + warped
+    
+    # the above code assumes that images use "premultiplied alpha"
+    # to convert a non-premultiplied image, img, to premultiplied alpha, use a line like
+    # alpha = img[:,:,3].reshape(img.shape[0], img.shape[1], 1)) / 255.0
+    # img = np.dstack((alpha * img[:,:,:3], img[:,:,3].reshape(img.shape[0], img.shape[1], 1)))
+    # converting back to non-premultiplied alpha is the inverse of this, but requires guarding against a
+    # potential divide-by-zero
+    # Luckily premultiplied and non-premultiplied alpha are the same if alpha is at its maximum value for
+    # every pixel. So if the output of your sequence of compositing is an image with full opacity everywhere,
+    # you don't have to worry about converting from premultiplied alpha.
     return dst
 
 def inbox_tri_warp(
@@ -192,6 +202,9 @@ def _crop_to_origin(
     dx, dy, bbox_w, bbox_h = bbox
     # Create base white image.
     base_image = np.ones((origin_h, origin_w, image.shape[2]), dtype=dtype.UINT8) * 255
+    if image.shape[2] == 4:
+        # base image should be transparent black if we're using an alpha channel
+        base_image *= 0
     slicer = np.zeros((2, 4), dtype=dtype.INT32)
     deltas, shape, bbox_shape = (dx, dy), (origin_w, origin_h), (bbox_w, bbox_h)
 
@@ -277,6 +290,9 @@ def graph_defined_warp(
 
     use_alpha = image.shape[2] == 4
     bbox_base_image = np.ones((bbox_h, bbox_w, 3 + use_alpha), dtype=dtype.UINT8) * 255
+
+    if use_alpha:
+        bbox_base_image *= 0
 
     # Iterate over all faces.
     for f_src, f_dst in zip(faces_src, faces_dst):

@@ -47,6 +47,7 @@ class DemoWithTransparency(object):
             dy: int = None,
             output_dir: str = None,
             image: Union[str, None] = op.join(op.dirname(__file__), '..', 'data', 'puppet-with-transparency.png'),
+            bg_image: Union[str, None] = op.join(op.dirname(__file__), '..', 'data', 'ufo-background.png'),
             verobse: bool = False
     ):
         # Screen dimensions.
@@ -63,10 +64,12 @@ class DemoWithTransparency(object):
             if not op.isfile(image):
                 raise FileNotFoundError(f"No image file {image}")
             self.img = cv2.imread(image, cv2.IMREAD_UNCHANGED)
-            print(f"Image shape is {self.img.shape}")
             self.transform_image = True
         self._img = self.img.copy()
         self._transformed_background = self.img.copy()
+        self._bg_img = np.ones((self.screen_height, self.screen_width, 3), np.uint8) * 255 
+        if bg_image is not None:
+            self._bg_img = cv2.imread(bg_image)
 
         if output_dir is None:
             output_dir = op.expanduser("~/pwarp")
@@ -212,7 +215,9 @@ class DemoWithTransparency(object):
                         self.img = warp.graph_defined_warp(
                             self.img, self.vertices_t, self.faces, new_vertices_t, self.faces)
                         self._transformed_background = self.img.copy()
-
+                        mask = self.img[:,:,3].reshape(self.img.shape[0], self.img.shape[1], 1) / 255.0
+                        self.img = self._bg_img * (1 - mask) + self.img[:,:,:3]
+                        self.img = np.array(self.img, dtype=np.uint8)
                     draw.draw_mesh(self.shift_and_scale(self.new_vertices), self.edges, self.img)
 
                     # Move control points in screen.
