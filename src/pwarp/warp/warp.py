@@ -38,12 +38,50 @@ def _broadcast_transformed_tri(
         dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] + warped
     return dst
 
+def _broadcast_transformed_tri_with_alpha_channel(
+        dst: np.ndarray,
+        bbox: Union[Tuple[int, int, int, int], np.ndarray],
+        warped: np.ndarray,
+        mask: np.ndarray,
+) -> np.ndarray:
+    """
+    Broadcast triangle transformed within bounding box in affine manner
+    into destination image of shape of original image.
+    Do blending using the "alpha" component of warped.
+
+    :param dst: np.ndarray;
+    :param bbox: Tuple[int, int, int, int]; (top_left_x, top_left_y, width, height)
+    :param warped: np.ndarray;
+    :param mask: np.ndarray;
+    :return: np.ndarray;
+    """
+    # Copy triangular region of the rectangular patch to the output image.
+    # TODO(mschuresko) : fix math to do proper blending
+    mask = mask * warped[:, :, 3].reshape(warped.shape[0], warped.shape[1], 1) / 255.0
+    inv_mask = 1.0 - mask
+    dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] = \
+        dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] * inv_mask
+
+    dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] = \
+        dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]] + warped
+
+    # the above code assumes that images use "premultiplied alpha"
+    # to convert a non-premultiplied image, img, to premultiplied alpha, use a line like
+    # alpha = img[:,:,3].reshape(img.shape[0], img.shape[1], 1)) / 255.0
+    # img = np.dstack((alpha * img[:,:,:3], img[:,:,3].reshape(img.shape[0], img.shape[1], 1)))
+    # converting back to non-premultiplied alpha is the inverse of this, but requires guarding against a
+    # potential divide-by-zero
+    # Luckily premultiplied and non-premultiplied alpha are the same if alpha is at its maximum value for
+    # every pixel. So if the output of your sequence of compositing is an image with full opacity everywhere,
+    # you don't have to worry about converting from premultiplied alpha.
+    return dst
 
 def inbox_tri_warp(
         src: np.ndarray,
         tri_src: np.ndarray,
         tri_dst: np.ndarray,
-        use_scikit: bool = True
+        use_scikit: bool = True,
+        use_alpha: bool = False
 ) -> Tuple[np.ndarray, np.ndarray, Tuple[int, int, int, int]]:
     """
     Based on src triangle and dst trianglle in 2D will find affine transformation and return this
@@ -78,8 +116,11 @@ def inbox_tri_warp(
         dst_cropped = cv2.warpAffine(src_cropped, cv2_warp_matrix, (bbox_dst[2], bbox_dst[3]), None, **_kwargs)
 
     # Get mask by filling triangle.
-    mask = np.zeros((bbox_dst[3], bbox_dst[2], 3), dtype=dtype.UINT8)
-    cv2.fillConvexPoly(mask, dtype.INT32(tri_dst_cropped), (1, 1, 1), 16, 0)
+    mask = np.zeros((bbox_dst[3], bbox_dst[2], 3 + use_alpha), dtype=dtype.UINT8)
+    if use_alpha:
+        cv2.fillConvexPoly(mask, dtype.INT32(tri_dst_cropped), (1, 1, 1, 1), 16, 0) # 16 is LINE_AA
+    else:
+        cv2.fillConvexPoly(mask, dtype.INT32(tri_dst_cropped), (1, 1, 1), 16, 0)
     dst_cropped *= mask
 
     return dst_cropped, mask, bbox_dst
@@ -160,7 +201,8 @@ def _crop_to_origin(
     """
     dx, dy, bbox_w, bbox_h = bbox
     # Create base white image.
-    base_image = np.ones((origin_h, origin_w, 3), dtype=dtype.UINT8) * 255
+    has_alpha = image.shape[2] == 4
+    base_image = np.full((origin_h, origin_w, image.shape[2]), 0 if has_alpha else 255, dtype=dtype.UINT8)
     slicer = np.zeros((2, 4), dtype=dtype.INT32)
     deltas, shape, bbox_shape = (dx, dy), (origin_w, origin_h), (bbox_w, bbox_h)
 
@@ -244,7 +286,8 @@ def graph_defined_warp(
     if (dx >= width or dy >= height) or (dx < -bbox_w or dy < -bbox_h):
         return np.ones((height, width, 3), dtype=dtype.UINT8) * 255
 
-    bbox_base_image = np.ones((bbox_h, bbox_w, 3), dtype=dtype.UINT8) * 255
+    use_alpha = image.shape[2] == 4
+    bbox_base_image = np.full((bbox_h, bbox_w, 3 + use_alpha), 0 if use_alpha else 255, dtype=dtype.UINT8)
 
     # Iterate over all faces.
     for f_src, f_dst in zip(faces_src, faces_dst):
@@ -252,14 +295,17 @@ def graph_defined_warp(
         r_src, r_dst = vertices_src[f_src], vertices_dst[f_dst]
         r_src, r_dst = np.array([r_src], dtype=r_src.dtype), np.array([r_dst], dtype=r_dst.dtype)
         # Transform given triangles pair in affine manner.
-        warped, alpha, bbox = inbox_tri_warp(image, r_src, r_dst, use_scikit=use_scikit)
+        warped, alpha, bbox = inbox_tri_warp(image, r_src, r_dst, use_scikit=use_scikit, use_alpha=use_alpha)
         # Adjust bounding box to match position within bbox base image.
         bbox = np.asarray(bbox, dtype=dtype.INT32)
         bbox[:2] -= [dx, dy]
 
         # Put transformed data within base image based on alpha mask and bounding box of given destination face.
         # Copy triangular region of the rectangular patch to the output image.
-        bbox_base_image = _broadcast_transformed_tri(bbox_base_image, bbox, warped, alpha)
+        if use_alpha:
+            bbox_base_image = _broadcast_transformed_tri_with_alpha_channel(bbox_base_image, bbox, warped, alpha)
+        else:
+            bbox_base_image = _broadcast_transformed_tri(bbox_base_image, bbox, warped, alpha)
 
     # Broadcast proper part of transformed bbox image to iamge of original shape.
     base_image = _crop_to_origin(bbox_base_image, (dx, dy, bbox_w, bbox_h), width, height)
