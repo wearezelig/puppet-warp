@@ -289,10 +289,7 @@ def graph_defined_warp(
         return np.ones((height, width, 3), dtype=dtype.UINT8) * 255
 
     use_alpha = image.shape[2] == 4
-    bbox_base_image = np.ones((bbox_h, bbox_w, 3 + use_alpha), dtype=dtype.UINT8) * 255
-
-    if use_alpha:
-        bbox_base_image *= 0
+    bbox_base_image = np.full((bbox_h, bbox_w, 3 + use_alpha), 0 if use_alpha else 255, dtype=dtype.UINT8)
 
     # Iterate over all faces.
     for f_src, f_dst in zip(faces_src, faces_dst):
