@@ -118,7 +118,7 @@ def inbox_tri_warp(
     # Get mask by filling triangle.
     mask = np.zeros((bbox_dst[3], bbox_dst[2], 3 + use_alpha), dtype=dtype.UINT8)
     if use_alpha:
-        cv2.fillConvexPoly(mask, dtype.INT32(tri_dst_cropped), (1, 1, 1, 1), 16, 0)
+        cv2.fillConvexPoly(mask, dtype.INT32(tri_dst_cropped), (1, 1, 1, 1), 16, 0) # 16 is LINE_AA
     else:
         cv2.fillConvexPoly(mask, dtype.INT32(tri_dst_cropped), (1, 1, 1), 16, 0)
     dst_cropped *= mask

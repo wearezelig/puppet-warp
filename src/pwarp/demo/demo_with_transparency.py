@@ -65,7 +65,7 @@ class DemoWithTransparency(object):
                 raise FileNotFoundError(f"No image file {image}")
             self.img = cv2.imread(image, cv2.IMREAD_UNCHANGED)
             mask = self.img[:,:,3].reshape(self.img.shape[0], self.img.shape[1], 1) / 255.0
-            self.img[:,:,:2] = np.array(self.img[:,:,:2] * mask, dtype=np.uint8)
+            self.img[:,:,:3] = np.array(self.img[:,:,:3] * mask, dtype=np.uint8)
             # convert the raw png to premultiplied alpha
             self.transform_image = True
         self._img = self.img.copy()
@@ -215,8 +215,9 @@ class DemoWithTransparency(object):
 
                     new_vertices_t = self.shift_and_scale(new_vertices)
                     if self.transform_image:
+                        sorted_faces = misc.sort_faces(self.faces, self.vertices, self.vertices[self.moving_index, :])
                         self.img = warp.graph_defined_warp(
-                            self.img, self.vertices_t, self.faces, new_vertices_t, self.faces)
+                            self.img, self.vertices_t, sorted_faces, new_vertices_t, sorted_faces)
                         self._transformed_background = self.img.copy()
                         mask = self.img[:,:,3].reshape(self.img.shape[0], self.img.shape[1], 1) / 255.0
                         self.img = self._bg_img * (1 - mask) + self.img[:,:,:3]
