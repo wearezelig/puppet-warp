@@ -12,7 +12,7 @@ from pwarp.demo import misc, draw
 from pwarp.logger import getLogger
 from pwarp.warp import warp
 
-logger = getLogger("pwarp.demo.demo")
+logger = getLogger("pwarp.demo.demo-with-transparency")
 
 
 class DemoWithTransparency(object):
@@ -57,6 +57,8 @@ class DemoWithTransparency(object):
         self.dy = dtype.INT(self.screen_height // 2) if dy is None else dy
         self.scale = dtype.FLOAT(scale)
 
+        self.should_draw_mesh = True
+
         # Background image preps.
         self.img = np.zeros((self.screen_height, self.screen_width, 3), np.uint8)
         self.transform_image = False
@@ -73,7 +75,9 @@ class DemoWithTransparency(object):
         self._bg_img = np.ones((self.screen_height, self.screen_width, 3), np.uint8) * 255
         if bg_image is not None:
             self._bg_img = cv2.imread(bg_image)
-
+            mask = self.img[:,:,3].reshape(self.img.shape[0], self.img.shape[1], 1) / 255.0
+            self.img = self._bg_img * (1 - mask) + self.img[:,:,:3]
+            self.img = np.array(self.img, dtype=np.uint8)
         if output_dir is None:
             output_dir = op.expanduser("~/pwarp")
         self.output_dir = output_dir
@@ -122,7 +126,7 @@ class DemoWithTransparency(object):
     @staticmethod
     def mouse_event_callback(event, *args):
         x, y, flags, param = args
-        self: Demo = param
+        self: DemoWithTransparency = param
 
         if event == cv2.EVENT_LBUTTONDOWN:
             is_close, index = misc.is_close(x, y, self.shift_and_scale(self.vertices))
@@ -170,7 +174,8 @@ class DemoWithTransparency(object):
 
                 content = self._transformed_background[_y - radius:_y + radius, _x - radius:_x + radius]
                 self.img[_y - radius:_y + radius, _x - radius:_x + radius] = content
-                draw.draw_mesh(self.shift_and_scale(vertices), self.edges, self.img)
+                if self.should_draw_mesh:
+                    draw.draw_mesh(self.shift_and_scale(vertices), self.edges, self.img)
                 cv2.imshow(self.window_name, self.img)
 
         elif event == cv2.EVENT_MOUSEMOVE:
@@ -222,7 +227,8 @@ class DemoWithTransparency(object):
                         mask = self.img[:,:,3].reshape(self.img.shape[0], self.img.shape[1], 1) / 255.0
                         self.img = self._bg_img * (1 - mask) + self.img[:,:,:3]
                         self.img = np.array(self.img, dtype=np.uint8)
-                    draw.draw_mesh(self.shift_and_scale(self.new_vertices), self.edges, self.img)
+                    if self.should_draw_mesh:
+                        draw.draw_mesh(self.shift_and_scale(self.new_vertices), self.edges, self.img)
 
                     # Move control points in screen.
                     [cv2.circle(self.img, (vertex[0], vertex[1]), self._circle_radius, (0, 0, 255), 1)
@@ -238,7 +244,8 @@ class DemoWithTransparency(object):
         cv2.namedWindow(self.window_name)
         cv2.setMouseCallback(self.window_name, self.mouse_event_callback, param=self)
 
-        draw.draw_mesh(self.vertices_t, self.edges, self.img)
+        if self.should_draw_mesh:
+            draw.draw_mesh(self.vertices_t, self.edges, self.img)
         try:
             count = 0
             while True:
@@ -256,6 +263,8 @@ class DemoWithTransparency(object):
                     _io.save_wavefront(path, self.num_vertices, self.num_faces, self.new_vertices, self.faces)
                     logger.info(f'object saved as {path}')
                     count += 1
+                elif key == ord('m'):
+                    self.should_draw_mesh = not self.should_draw_mesh
 
         except KeyboardInterrupt:
             logger.info("quit")
