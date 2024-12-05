@@ -30,7 +30,7 @@ def _broadcast_transformed_tri(
     :return: np.ndarray;
     """
     # Copy triangular region of the rectangular patch to the output image.
-    mask = (1.0 - mask)
+    np.subtract(np.array((1,), dtype=mask.dtype), mask, out=mask)
     submask = dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]]
     np.multiply(submask, mask.astype(submask.dtype), out=submask)
     np.add(submask, warped, out=submask)
