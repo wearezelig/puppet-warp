@@ -278,8 +278,6 @@ def graph_defined_warp(
     height, width = image.shape[:2]
     dx, dy, bbox_w, bbox_h = cv2.boundingRect(vertices_dst)
 
-    print(f"doing a graph defined warp, image shape is {image.shape}")
-
     # If entire graph is out of the box.
     if (dx >= width or dy >= height) or (dx < -bbox_w or dy < -bbox_h):
         return np.ones((height, width, 3), dtype=dtype.UINT8) * 255
