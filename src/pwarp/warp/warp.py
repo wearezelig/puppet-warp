@@ -30,7 +30,7 @@ def _broadcast_transformed_tri(
     :return: np.ndarray;
     """
     # Copy triangular region of the rectangular patch to the output image.
-    mask = ((1.0, 1.0, 1.0) - mask)
+    np.subtract(np.array((1,), dtype=mask.dtype), mask, out=mask)
     submask = dst[bbox[1]:bbox[1] + bbox[3], bbox[0]:bbox[0] + bbox[2]]
     np.multiply(submask, mask.astype(submask.dtype), out=submask)
     np.add(submask, warped, out=submask)
@@ -114,11 +114,8 @@ def inbox_tri_warp(
         dst_cropped = cv2.warpAffine(src_cropped, cv2_warp_matrix, (bbox_dst[2], bbox_dst[3]), None, **_kwargs)
 
     # Get mask by filling triangle.
-    mask = np.zeros((bbox_dst[3], bbox_dst[2], 3 + use_alpha), dtype=dtype.UINT8)
-    if use_alpha:
-        cv2.fillConvexPoly(mask, dtype.INT32(tri_dst_cropped), (1, 1, 1, 1), cv2.LINE_AA, 0)
-    else:
-        cv2.fillConvexPoly(mask, dtype.INT32(tri_dst_cropped), (1, 1, 1), cv2.LINE_AA, 0)
+    mask = np.zeros((bbox_dst[3], bbox_dst[2], 1), dtype=dtype.UINT8)
+    cv2.fillConvexPoly(mask, dtype.INT32(tri_dst_cropped), (1,), cv2.LINE_AA, 0)
     dst_cropped *= mask
 
     return dst_cropped, mask, bbox_dst
@@ -259,11 +256,12 @@ def graph_defined_warp(
         vertices_dst: np.ndarray,
         faces_dst: np.ndarray,
         use_scikit: Union[dtype.BOOL, bool] = False,
+        support_deep_images: Union[dtype.BOOL, bool] = False,
 ) -> np.ndarray:
     """
     Based on triangulated shape transformed from source to destination mesh
     will provide transformation of image. The idea is to do an affine transformation
-    of each triangle in mesh. The affine transformation is definde for each triangle
+    of each triangle in mesh. The affine transformation is defined for each triangle
     separately and partial results are merged at the end of the process.
 
     :param image: np.ndarray; image
@@ -285,7 +283,13 @@ def graph_defined_warp(
         return np.ones((height, width, 3), dtype=dtype.UINT8) * 255
 
     use_alpha = image.shape[2] == 4
-    bbox_base_image = np.full((bbox_h, bbox_w, 3 + use_alpha), 0 if use_alpha else 255, dtype=dtype.UINT8)
+    if support_deep_images:
+        use_alpha = False
+    bbox_base_image = np.full(
+        (bbox_h, bbox_w, image.shape[2] if support_deep_images else 3 + use_alpha),
+        0 if use_alpha else 255,
+        dtype=dtype.UINT8
+    )
 
     # Iterate over all faces.
     for f_src, f_dst in zip(faces_src, faces_dst):
