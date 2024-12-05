@@ -285,7 +285,11 @@ def graph_defined_warp(
     use_alpha = image.shape[2] == 4
     if support_deep_images:
         use_alpha = False
-    bbox_base_image = np.full((bbox_h, bbox_w, image.shape[2] if support_deep_images else 3 + use_alpha), 0 if use_alpha else 255, dtype=dtype.UINT8)
+    bbox_base_image = np.full(
+        (bbox_h, bbox_w, image.shape[2] if support_deep_images else 3 + use_alpha),
+        0 if use_alpha else 255,
+        dtype=dtype.UINT8
+    )
 
     # Iterate over all faces.
     for f_src, f_dst in zip(faces_src, faces_dst):
