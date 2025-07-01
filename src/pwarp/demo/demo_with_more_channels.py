@@ -222,9 +222,12 @@ class DemoWithTransparency(object):
                     new_vertices_t = self.shift_and_scale(new_vertices)
                     if self.transform_image:
                         sorted_faces = misc.sort_faces(self.faces, self.vertices, self.vertices[self.moving_index, :])
+                        default_fill_color = np.zeros(self.img.shape[2], dtype=np.uint8)
                         self.img = warp.graph_defined_warp(
                             self.img, self.vertices_t, sorted_faces, new_vertices_t, sorted_faces,
-                            support_deep_images=True)
+                            support_deep_images=True,
+                            default_fill_color=default_fill_color,
+                        )
                         self._transformed_background = self.img.copy()
                         mask = self.img[:,:,3].reshape(self.img.shape[0], self.img.shape[1], 1) / 255.0
                         self.img = self._bg_img * (1 - mask) + self.img[:,:,:3]
