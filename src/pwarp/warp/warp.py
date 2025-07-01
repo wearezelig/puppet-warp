@@ -181,6 +181,7 @@ def _crop_to_origin(
         bbox: Tuple[int, int, int, int],
         origin_w: Union[int, dtype.INT],
         origin_h: Union[int, dtype.INT],
+        use_alpha: bool = False,
         default_fill_color: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
@@ -193,16 +194,23 @@ def _crop_to_origin(
     :param image: np.ndarray;
     :param origin_w: Union[int, dtype.INT];
     :param origin_h: Union[int, dtype.INT];
+    :param use_alpha: bool;
     :param default_fill_color: Optional[np.ndarray];
     :return: np.ndarray;
     """
     dx, dy, bbox_w, bbox_h = bbox
-    # Create base white image.
-    has_alpha = image.shape[2] == 4
-    base_image = np.full((origin_h, origin_w, image.shape[2]), 0 if has_alpha else 255, dtype=dtype.UINT8)
-    if default_fill_color is not None:
-        for i, chan_val in enumerate(default_fill_color):
-            base_image[:,:,i] = chan_val
+    # Create base image.
+    num_channels = image.shape[2] if not use_alpha else 4
+    if default_fill_color is None:
+        fill_color = 0 if use_alpha else 255
+    else:
+        fill_color = np.concatenate(
+            (default_fill_color,
+             [0 if use_alpha else 255] *
+             (num_channels - len(default_fill_color)))
+        )
+    base_image = np.full((origin_h, origin_w, image.shape[2]),
+                         fill_color, dtype=np.uint8)
     slicer = np.zeros((2, 4), dtype=dtype.INT32)
     deltas, shape, bbox_shape = (dx, dy), (origin_w, origin_h), (bbox_w, bbox_h)
 
@@ -293,14 +301,17 @@ def graph_defined_warp(
     use_alpha = image.shape[2] == 4
     if support_deep_images:
         use_alpha = False
-    bbox_base_image = np.full(
-        (bbox_h, bbox_w, image.shape[2] if support_deep_images else 3 + use_alpha),
-        0 if use_alpha else 255,
-        dtype=dtype.UINT8
-    )
-    if default_fill_color is not None:
-        for i, chan_val in enumerate(default_fill_color):
-            bbox_base_image[:,:,i] = chan_val
+    num_channels = image.shape[2] if support_deep_images else 3 + use_alpha
+    if default_fill_color is None:
+        fill_color = 0 if use_alpha else 255
+    else:
+        fill_color = np.concatenate(
+            (default_fill_color,
+             [0 if use_alpha else 255] *
+             (num_channels - len(default_fill_color)))
+        )
+    bbox_base_image = np.full((bbox_h, bbox_w, num_channels), fill_color,
+                              dtype=np.uint8)
 
     # Iterate over all faces.
     for f_src, f_dst in zip(faces_src, faces_dst):
@@ -321,7 +332,7 @@ def graph_defined_warp(
             bbox_base_image = _broadcast_transformed_tri(bbox_base_image, bbox, warped, alpha)
 
     # Broadcast proper part of transformed bbox image to iamge of original shape.
-    base_image = _crop_to_origin(bbox_base_image, (dx, dy, bbox_w, bbox_h), width, height, default_fill_color)
+    base_image = _crop_to_origin(bbox_base_image, (dx, dy, bbox_w, bbox_h), width, height, use_alpha, default_fill_color)
 
     return base_image
 
