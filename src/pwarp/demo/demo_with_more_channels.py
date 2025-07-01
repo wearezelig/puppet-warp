@@ -226,7 +226,7 @@ class DemoWithTransparency(object):
                         self.img = warp.graph_defined_warp(
                             self.img, self.vertices_t, sorted_faces, new_vertices_t, sorted_faces,
                             support_deep_images=True,
-                            default_fill_color = default_fill_color,
+                            default_fill_color=default_fill_color,
                         )
                         self._transformed_background = self.img.copy()
                         mask = self.img[:,:,3].reshape(self.img.shape[0], self.img.shape[1], 1) / 255.0
