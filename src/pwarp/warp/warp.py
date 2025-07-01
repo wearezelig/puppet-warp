@@ -1,4 +1,4 @@
-from typing import Union, Iterable, Tuple
+from typing import Iterable, Optional, Tuple, Union
 
 import cv2
 import numpy as np
@@ -181,6 +181,7 @@ def _crop_to_origin(
         bbox: Tuple[int, int, int, int],
         origin_w: Union[int, dtype.INT],
         origin_h: Union[int, dtype.INT],
+        default_fill_color: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
     Some traget vertices of transformed mesh might be outside of original iamge boundaries.
@@ -192,12 +193,16 @@ def _crop_to_origin(
     :param image: np.ndarray;
     :param origin_w: Union[int, dtype.INT];
     :param origin_h: Union[int, dtype.INT];
+    :param default_fill_color: Optional[np.ndarray];
     :return: np.ndarray;
     """
     dx, dy, bbox_w, bbox_h = bbox
     # Create base white image.
     has_alpha = image.shape[2] == 4
     base_image = np.full((origin_h, origin_w, image.shape[2]), 0 if has_alpha else 255, dtype=dtype.UINT8)
+    if default_fill_color is not None:
+        for i, chan_val in enumerate(default_fill_color):
+            base_image[:,:,i] = chan_val
     slicer = np.zeros((2, 4), dtype=dtype.INT32)
     deltas, shape, bbox_shape = (dx, dy), (origin_w, origin_h), (bbox_w, bbox_h)
 
@@ -257,6 +262,7 @@ def graph_defined_warp(
         faces_dst: np.ndarray,
         use_scikit: Union[dtype.BOOL, bool] = False,
         support_deep_images: Union[dtype.BOOL, bool] = False,
+        default_fill_color: Optional[np.ndarray] = None,
 ) -> np.ndarray:
     """
     Based on triangulated shape transformed from source to destination mesh
@@ -270,6 +276,8 @@ def graph_defined_warp(
     :param vertices_dst: np.ndarray;
     :param faces_dst: np.ndarray;
     :param use_scikit: bool;
+    :param support_deep_images: bool;
+    :param default_fill_color: Optional[np.ndarray];
     :return: np.ndarray;
     """
     # Create white image of shape of vertices bonding box.
@@ -290,6 +298,9 @@ def graph_defined_warp(
         0 if use_alpha else 255,
         dtype=dtype.UINT8
     )
+    if default_fill_color is not None:
+        for i, chan_val in enumerate(default_fill_color):
+            bbox_base_image[:,:,i] = chan_val
 
     # Iterate over all faces.
     for f_src, f_dst in zip(faces_src, faces_dst):
@@ -310,7 +321,7 @@ def graph_defined_warp(
             bbox_base_image = _broadcast_transformed_tri(bbox_base_image, bbox, warped, alpha)
 
     # Broadcast proper part of transformed bbox image to iamge of original shape.
-    base_image = _crop_to_origin(bbox_base_image, (dx, dy, bbox_w, bbox_h), width, height)
+    base_image = _crop_to_origin(bbox_base_image, (dx, dy, bbox_w, bbox_h), width, height, default_fill_color)
 
     return base_image
 
