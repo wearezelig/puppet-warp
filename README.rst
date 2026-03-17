@@ -35,7 +35,6 @@ Requirements
 
     numpy>=1.21.5
     opencv-contrib-python>=4.5.4.60,<=4.11.0.86
-    opencv-python>=4.5.4.60,<=4.11.0.86
     scikit-image>=0.19.2,<=0.25.1
     scikit-learn>=1.0.2,<=1.6.1
 
