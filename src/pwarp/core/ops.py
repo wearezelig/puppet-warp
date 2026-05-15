@@ -1,5 +1,5 @@
-from .. import np
-from . import dtype
+from pwarp import np
+from pwarp.core import dtype
 
 
 def find_ijlr_vertices(edge: np.ndarray, faces: np.ndarray):

@@ -3,8 +3,8 @@ from typing import Tuple
 from skimage._shared.utils import convert_to_float
 from skimage.transform._warps_cy import _warp_fast
 
-from .. import np
-from ..core import dtype
+from pwarp import np
+from pwarp.core import dtype
 
 
 def pad(v: np.ndarray) -> np.ndarray:

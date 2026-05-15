@@ -1,6 +1,5 @@
+from pwarp import np
 from typing import List
-
-from .. import np
 
 
 def is_close(x, y, vertices, _tol=4):

@@ -1,4 +1,4 @@
-from .. import np
+from pwarp import np
 
 FLOAT = np.float32
 INT = np.int32

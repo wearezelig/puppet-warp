@@ -5,12 +5,12 @@ from typing import Union
 
 import cv2
 
-from .. import np, _io
-from ..core import ops, dtype
-from ..core.arap import StepOne, StepTwo
-from . import misc, draw
-from ..logger import getLogger
-from ..warp import warp
+from pwarp import np, _io
+from pwarp.core import ops, dtype
+from pwarp.core.arap import StepOne, StepTwo
+from pwarp.demo import misc, draw
+from pwarp.logger import getLogger
+from pwarp.warp import warp
 
 logger = getLogger("pwarp.demo.demo-with-transparency")
 

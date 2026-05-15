@@ -2,7 +2,7 @@ from typing import Tuple
 
 import cv2
 
-from .. import np
+from pwarp import np
 
 
 def draw_mesh(

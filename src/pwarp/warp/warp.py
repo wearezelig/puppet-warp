@@ -3,9 +3,9 @@ from typing import Union, Iterable, Tuple
 import cv2
 import numpy as np
 
-from ..core import dtype, ops
-from ..core.arap import StepOne, StepTwo
-from . import affine
+from pwarp.core import dtype, ops
+from pwarp.core.arap import StepOne, StepTwo
+from pwarp.warp import affine
 
 __all__ = (
     'graph_defined_warp',
