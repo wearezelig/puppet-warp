@@ -10,6 +10,7 @@ from pwarp import _io
 from pwarp.demo.demo import Demo
 from pwarp.demo.demo_with_transparency import DemoWithTransparency
 
+from .__version__ import VERSION
 
 __all__ = (
     '__version__',
@@ -36,5 +37,5 @@ def get_default_puppet():
     return PuppetObject(vertices=r, faces=f, no_faces=no_f, no_vertices=no_r)
 
 
-__version__ = "0.4.dev0"
+__version__ = VERSION
 __author__ = "mikecokina"

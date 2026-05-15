@@ -1,49 +1,40 @@
-[build-system]
-requires = ["setuptools>=61.0", "wheel"]
-build-backend = "setuptools.build_meta"
-
 [project]
-name = "puppet-warp"
-version = "0.1.0"  # dynamically loaded in setup.py from version.py, this is fallback
-description = "Puppet Warp"
+name = "zelig-puppet-warp"
+version = "0.4.0"  # dynamically loaded in setup.py from version.py, this is fallback
+description = "Puppet Warp, as maintained by Zelig."
 readme = "README.rst"
-requires-python = ">=3.7"
-license = { text = "GPL-3.0-or-later" }
+requires-python = ">=3.11"
+license = "GPL-3.0-or-later"
+dependencies = [    
+    "numpy>=1.24.0",
+    "opencv-contrib-python-headless>=4.7.0.72,<=4.11.0.86",
+    "scikit-image>=0.20.0,<=0.25.1",
+    "scikit-learn>=1.1.3,<=1.6.1",
+]
 
 authors = [
-  { name = "Michal Cokina", email = "mikecokina@gmail.com" }
-]
-
-keywords = ["image"]
-
-classifiers = [
-  "Development Status :: 3 - Alpha",
-  "Intended Audience :: Developers",
-  "Topic :: Scientific/Engineering",
-  "Topic :: Scientific/Engineering :: Image Processing",
-#  "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-  "Programming Language :: Python :: 3.7",
-  "Programming Language :: Python :: 3.8",
-  "Programming Language :: Python :: 3.9",
-  "Programming Language :: Python :: 3.10",
-  "Programming Language :: Python :: 3.11",
-  "Programming Language :: Python :: 3.12"
-]
-
-dependencies = [
-  "numpy>=1.21.5",
-  "opencv-contrib-python-headless>=4.5.4.60,<=4.11.0.86",
-  # Swap out the headless opencv above for the following
-  # headed version if you want to run the demo
-  # "opencv-python>=4.5.4.60,<=4.11.0.86",
-  "scikit-image>=0.19.2,<=0.25.1",
-  "scikit-learn>=1.0.2,<=1.6.1"
+  { name = "Michal Cokina", email = "mikecokina@gmail.com" },
+  { name = "Zelig Engineering", email = "engineering@zelig.com" },
 ]
 
 [project.optional-dependencies]
-jrs = ["triangle>=20200424"]
-test = ["parameterized>=0.8.1"]
+dev = [
+    "parameterized>=0.8.1",
+    "pre-commit==4.5.1",
+    "pylint==3.3.9",
+    "pylint-actions==0.6.0",
+    "pytest==9.0.2",
+    "pytest-github-actions-annotate-failures==0.4.0",
+    "ruff==0.15.6",
+]
+jrs = ["triangle @ git+https://github.com/drufat/triangle.git"]
 
 [project.urls]
-Homepage = "https://github.com/mikecokina/puppet-warp"
-Repository = "https://github.com/mikecokina/puppet-warp"
+Homepage = "https://github.com/wearezelig/puppet-warp"
+Repository = "https://github.com/wearezelig/puppet-warp"
+Original_Homepage = "https://github.com/mikecokina/puppet-warp"
+Original_Repository = "https://github.com/mikecokina/puppet-warp"
+
+
+[tool.setuptools.package-data]
+"pwarp" = ["conf/logging_schemas/default.json"]
