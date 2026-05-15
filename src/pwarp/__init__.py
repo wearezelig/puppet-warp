@@ -1,14 +1,15 @@
 import os.path as op
 
-from pwarp._np import np
-from pwarp.conf import initialize_logger
-from pwarp.data.puppet import PuppetObject
-from pwarp.warp.warp import graph_defined_warp, graph_warp
-from pwarp.mesh.tri import triangular_mesh
-from pwarp.core.arap import StepOne as ARAPStepOne, StepTwo as ARAPStepTwo
-from pwarp import _io
-from pwarp.demo.demo import Demo
-from pwarp.demo.demo_with_transparency import DemoWithTransparency
+from .__version__ import VERSION
+from ._np import np
+from .conf import initialize_logger
+from .data.puppet import PuppetObject
+from .warp.warp import graph_defined_warp, graph_warp
+from .mesh.tri import triangular_mesh
+from .core.arap import StepOne as ARAPStepOne, StepTwo as ARAPStepTwo
+from . import _io
+from .demo.demo import Demo
+from .demo.demo_with_transparency import DemoWithTransparency
 
 
 __all__ = (
@@ -36,5 +37,5 @@ def get_default_puppet():
     return PuppetObject(vertices=r, faces=f, no_faces=no_f, no_vertices=no_r)
 
 
-__version__ = "0.4.dev0"
+__version__ = VERSION
 __author__ = "mikecokina"

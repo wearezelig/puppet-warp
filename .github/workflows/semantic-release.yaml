@@ -1,0 +1,55 @@
+name: Semantic Release and Publish
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  id-token: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    outputs:
+      released: ${{ steps.semantic.outputs.released }}
+      version: ${{ steps.semantic.outputs.version }}
+    concurrency:
+      group: release
+
+    steps:
+    - name: Generate a token
+      id: generate-token
+      uses: actions/create-github-app-token@v1
+      with:
+        # Set at org level
+        app-id: ${{ vars.ZELIG_DEPLOYER_APP_ID }}
+        # Set at repo level
+        private-key: ${{ secrets.ZELIG_DEPLOYER_PRIVATE_KEY }}
+    # Fancier vs. hard-coding
+    # https://github.com/actions/create-github-app-token?tab=readme-ov-file#configure-git-cli-for-an-apps-bot-user
+    - name: Get GitHub App User ID
+      id: get-user-id
+      run: echo "user-id=$(gh api "/users/${{ steps.generate-token.outputs.app-slug }}[bot]" --jq .id)" >> "$GITHUB_OUTPUT"
+      env:
+        GH_TOKEN: ${{ steps.generate-token.outputs.token }}
+    - uses: actions/checkout@v4
+      with:
+        token: ${{ steps.generate-token.outputs.token }}
+        fetch-depth: 0
+    - name: Python Semantic Release
+      id: semantic
+      uses: python-semantic-release/python-semantic-release@v9.8.7
+      with:
+        github_token: ${{ steps.generate-token.outputs.token }}
+        git_committer_email: '${{ steps.get-user-id.outputs.user-id }}+${{ steps.generate-token.outputs.app-slug }}[bot]@users.noreply.github.com'
+        git_committer_name: '${{ steps.generate-token.outputs.app-slug }}[bot]'
+
+  publish:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    uses: ./.github/workflows/publish.yaml
+    with:
+      environment: release
+      version: ${{ needs.release.outputs.version }}

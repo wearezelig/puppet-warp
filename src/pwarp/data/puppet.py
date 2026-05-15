@@ -2,7 +2,7 @@ from dataclasses import dataclass
 
 import numpy as np
 
-from pwarp.core import dtype
+from ..core import dtype
 
 __all__ = (
     'PuppetObject',

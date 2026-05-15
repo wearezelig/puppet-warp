@@ -1,0 +1,82 @@
+name: Publish Python Package
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+      version:
+        required: true
+        type: string
+
+env:
+  workload_identity_provider: projects/${{ vars.GCLOUD_PROJECT_ID }}/locations/global/workloadIdentityPools/github-actions/providers/github-actions
+  service_account: ${{ vars.GH_SERVICE_ACCOUNT_ID }}@${{ vars.GCLOUD_PROJECT }}.iam.gserviceaccount.com
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+        with:
+          ref: v${{ inputs.version }}
+
+      - name: Bring in uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.11"
+
+      - name: Build
+        run: uv build
+
+      - name: Upload dist
+        uses: actions/upload-artifact@v4
+        with:
+          name: python-dist
+          path: dist/*
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    environment: ${{ inputs.environment }}
+    permissions:
+      id-token: write
+      contents: read
+
+    steps:
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+        with:
+          python-version: "3.11"
+          enable-cache: false
+          ignore-empty-workdir: "false"
+
+      - name: Setup GCP Auth
+        id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          token_format: access_token
+          create_credentials_file: false
+          workload_identity_provider: ${{ env.workload_identity_provider }}
+          service_account: ${{ env.service_account }}
+
+      - name: Set Artifact Registry auth
+        run: |
+          echo "UV_PUBLISH_USERNAME=oauth2accesstoken" >> $GITHUB_ENV
+          echo "UV_PUBLISH_PASSWORD=${{ steps.auth.outputs.access_token }}" >> $GITHUB_ENV
+
+      - name: Set Publish URLs
+        run: |
+          echo "UV_PUBLISH_URL=https://us-central1-python.pkg.dev/${{ vars.GCLOUD_PROJECT }}/python-libs/" >> $GITHUB_ENV
+          echo "UV_PUBLISH_CHECK_URL=https://us-central1-python.pkg.dev/${{ vars.GCLOUD_PROJECT }}/python-libs/simple/" >> $GITHUB_ENV
+
+      - name: Download dist
+        uses: actions/download-artifact@v4
+        with:
+          name: python-dist
+          path: dist/
+
+      - name: Publish
+        run: uv publish dist/*

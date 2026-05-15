@@ -1,8 +1,7 @@
 from typing import Tuple
 
-from pwarp.core import ops
-from pwarp.core import dtype
-from pwarp import np
+from . import ops, dtype
+from .. import np
 
 __all__ = (
     'StepOne',

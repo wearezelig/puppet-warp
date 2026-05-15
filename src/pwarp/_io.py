@@ -1,8 +1,8 @@
 import os
 import re
 
-from pwarp import np
-from pwarp.core import dtype
+from . import np
+from .core import dtype
 
 
 def read_wavefront(path: str):

@@ -1,7 +1,7 @@
 from typing import Union, Tuple
 
-from pwarp import np
-from pwarp.core import dtype
+from .. import np
+from ..core import dtype
 
 
 __all__ = (

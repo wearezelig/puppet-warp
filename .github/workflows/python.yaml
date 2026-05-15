@@ -1,0 +1,32 @@
+---
+name: Python Checks
+
+on:
+  pull_request: {}
+
+jobs:
+  python:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install pip dependencies
+      run: pip3 install -e ".[dev]" --break-system-packages
+
+    - name: Add Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '24'
+
+    - name: Run Pyright
+      run: npx pyright
+
+    - name: Run pylint
+      run: pylint -f actions --jobs=3 '**/*.py'
+
+    - name: Run pytest
+      run: pytest -vv --color=yes
